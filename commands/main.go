@@ -13,6 +13,8 @@ func Run(fullCommand string, directory string) {
   cmd := exec.Command(command, arguments...)
   if directory == "" {
     cmd.Dir = directories.GetWorking()
+  } else if strings.HasPrefix(directory, "./") {
+    cmd.Dir = replaceRelativeWithFullPath(directory)
   } else {
     cmd.Dir = directory
   }
@@ -23,4 +25,8 @@ func Run(fullCommand string, directory string) {
 func separateCommand(fullCommand string) (string, []string) {
   split := strings.Split(fullCommand, " ")
   return split[0], split[1:len(split)]
+}
+
+func replaceRelativeWithFullPath(directory string) string {
+  return strings.Replace(directory, ".", directories.GetWorking(), 1)
 }
