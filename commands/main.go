@@ -20,8 +20,13 @@ func Run(fullCommand string, directory string) string {
   }
   out, _ := cmd.Output()
   err := cmd.Run()
-  errors.LogIfError(err)
-  return string(out)
+  harmlessError := "exec: already started"
+  if err.Error() == harmlessError {
+    return string(out)
+  } else {
+    errors.LogIfError(err)
+    return string(out)
+  }
 }
 
 func separateCommand(fullCommand string) (string, []string) {
