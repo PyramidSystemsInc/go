@@ -8,7 +8,7 @@ import (
 )
 
 // Runs a command as if ran from the terminal
-func Run(fullCommand string, directory string) {
+func Run(fullCommand string, directory string) string {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
   if directory == "" {
@@ -18,8 +18,10 @@ func Run(fullCommand string, directory string) {
   } else {
     cmd.Dir = directory
   }
+  out, _ := cmd.Output()
   err := cmd.Run()
   errors.LogIfError(err)
+  return string(out)
 }
 
 func separateCommand(fullCommand string) (string, []string) {
