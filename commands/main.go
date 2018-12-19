@@ -1,6 +1,7 @@
 package commands
 
 import (
+  "io/ioutil"
   "os/exec"
   "strings"
   "github.com/PyramidSystemsInc/go/directories"
@@ -11,6 +12,8 @@ import (
 func Run(fullCommand string, directory string) string {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
+  stdout, err := cmd.StdoutPipe()
+  errors.LogIfError(err)
   if directory == "" {
     cmd.Dir = directories.GetWorking()
   } else if strings.HasPrefix(directory, "./") {
@@ -18,15 +21,13 @@ func Run(fullCommand string, directory string) string {
   } else {
     cmd.Dir = directory
   }
-  out, _ := cmd.Output()
-  err := cmd.Run()
-  harmlessError := "exec: already started"
-  if err.Error() == harmlessError {
-    return string(out)
-  } else {
-    errors.LogIfError(err)
-    return string(out)
-  }
+  err = cmd.Start()
+  errors.LogIfError(err)
+  output, err := ioutil.ReadAll(stdout)
+  errors.LogIfError(err)
+  err = cmd.Wait()
+  errors.LogIfError(err)
+  return string(output)
 }
 
 func separateCommand(fullCommand string) (string, []string) {
