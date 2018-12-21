@@ -28,11 +28,13 @@ func Run(fullCommand string, directory string) string {
   errors.LogIfError(err)
   output, err := ioutil.ReadAll(stdout)
   errors.LogIfError(err)
-  errorOutput, err := ioutil.ReadAll(stderr)
+  _, err = ioutil.ReadAll(stderr)
   errors.LogIfError(err)
+/*
   if string(errorOutput) != "" {
     logger.Warn(string(errorOutput))
   }
+*/
   err = cmd.Wait()
   errors.LogIfError(err)
   out := strings.TrimRight(string(output), "\n")
