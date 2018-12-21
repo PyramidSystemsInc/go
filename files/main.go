@@ -1,6 +1,7 @@
 package files
 
 import (
+  "io/ioutil"
   "os"
   "text/template"
   "github.com/PyramidSystemsInc/go/errors"
@@ -23,4 +24,10 @@ func CreateFromTemplate(filePath string, pattern string, config map[string]strin
   err = t.Execute(file, config)
   errors.QuitIfError(err)
   file.Close()
+}
+
+func Read(filePath string) []byte {
+  data, err := ioutil.ReadFile(filePath)
+  errors.LogIfError(err)
+  return data
 }

@@ -44,6 +44,7 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
     Memory: aws.String("16384"),
     NetworkMode: aws.String("awsvpc"),
   })
+    // TaskRoleArn: aws.String("jenkins_instance"),
   errors.LogIfError(err)
   return ""
 }

@@ -14,6 +14,38 @@ func Run(fullCommand string, directory string) string {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
   stdout, err := cmd.StdoutPipe()
+  errors.LogIfError(err)
+  stderr, err := cmd.StderrPipe()
+  errors.LogIfError(err)
+  if directory == "" {
+    cmd.Dir = directories.GetWorking()
+  } else if strings.HasPrefix(directory, "./") {
+    cmd.Dir = replaceRelativeWithFullPath(directory)
+  } else {
+    cmd.Dir = directory
+  }
+  err = cmd.Start()
+  errors.LogIfError(err)
+  output, err := ioutil.ReadAll(stdout)
+  errors.LogIfError(err)
+  errorOutput, err := ioutil.ReadAll(stderr)
+  errors.LogIfError(err)
+  if string(errorOutput) != "" {
+    logger.Warn(string(errorOutput))
+  }
+  err = cmd.Wait()
+  errors.LogIfError(err)
+  out := strings.TrimRight(string(output), "\n")
+  return out
+}
+
+// Runs a command as if ran from the terminal
+func RunWithStdin(fullCommand string, data string, directory string) string {
+  command, arguments := separateCommand(fullCommand)
+  cmd := exec.Command(command, arguments...)
+  cmd.Stdin = strings.NewReader(data)
+  stdout, err := cmd.StdoutPipe()
+  errors.LogIfError(err)
   stderr, err := cmd.StderrPipe()
   errors.LogIfError(err)
   if directory == "" {
