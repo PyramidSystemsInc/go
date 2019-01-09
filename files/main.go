@@ -5,7 +5,10 @@ import (
   "net/http"
   "os"
   "text/template"
+  "github.com/hectane/go-acl"
+  "github.com/PyramidSystemsInc/go/commands"
   "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/str"
 )
 
 // Simply creates a file given a full path (including file name and extension)
@@ -45,4 +48,15 @@ func Download(url string, fullPath string) {
 
 func Write(fullPath string, data []byte) {
   ioutil.WriteFile(fullPath, data, 0644)
+}
+
+func ChangePermissions(fullPath string, permissions int) {
+  if strings.IndexOf(fullPath, ".") == 0 {
+    fullPath = str.Concat(directories.GetWorking(), fullPath[1:len(fullPath)])
+  }
+  if runtime.GOOS == "windows" {
+    err := acl.Chmod(fullPath, permissions)
+  } else {
+    commands.Run(str.Concat("chmod 755 ", fullPath), "")
+  }
 }
