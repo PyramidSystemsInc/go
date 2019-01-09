@@ -4,6 +4,7 @@ import (
   "errors"
   "strings"
   "github.com/PyramidSystemsInc/go/commands"
+  "github.com/PyramidSystemsInc/go/str"
 )
 
 func GetUrl() (string, error) {
@@ -18,6 +19,6 @@ func GetUrl() (string, error) {
 }
 
 func Login(region string) {
-  output := commands.Run("aws ecr get-login --no-include-email --region " + region, "")
+  output := commands.Run(str.Concat("aws ecr get-login --no-include-email --region " + region), "")
   commands.Run(output, "")
 }

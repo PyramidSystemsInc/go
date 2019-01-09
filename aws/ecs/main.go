@@ -9,6 +9,7 @@ import (
   "github.com/PyramidSystemsInc/go/aws/ec2"
   "github.com/PyramidSystemsInc/go/aws/ecr"
   "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/str"
 )
 
 func LaunchFargateContainer(taskDefinitionName string, clusterName string, awsSession *session.Session) string {
@@ -31,7 +32,7 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
     ContainerDefinitions: []*ecs.ContainerDefinition{
       {
         Essential: aws.Bool(true),
-        Image: aws.String(ecrUrl + "/" + imageNames[0]),
+        Image: aws.String(str.Concat(ecrUrl, "/", imageNames[0])),
         Name: aws.String(imageNames[0]),
       },
     },
