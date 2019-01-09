@@ -3,13 +3,9 @@ package files
 import (
   "io/ioutil"
   "net/http"
-  "runtime"
   "os"
   "strings"
-  "strconv"
   "text/template"
-  "github.com/hectane/go-acl"
-  "github.com/PyramidSystemsInc/go/commands"
   "github.com/PyramidSystemsInc/go/directories"
   "github.com/PyramidSystemsInc/go/errors"
   "github.com/PyramidSystemsInc/go/str"
@@ -58,10 +54,6 @@ func ChangePermissions(fullPath string, permissions int) {
   if strings.Index(fullPath, ".") == 0 {
     fullPath = str.Concat(directories.GetWorking(), fullPath[1:len(fullPath)])
   }
-  if runtime.GOOS == "windows" {
-    err := acl.Chmod(fullPath, os.FileMode(permissions))
-    errors.LogIfError(err)
-  } else {
-    commands.Run(str.Concat("chmod ", strconv.Itoa(permissions), " ", fullPath), "")
-  }
+  err := os.Chmod(fullPath, os.FileMode(permissions))
+  errors.LogIfError(err)
 }
