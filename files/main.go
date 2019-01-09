@@ -2,6 +2,7 @@ package files
 
 import (
   "io/ioutil"
+  "net/http"
   "os"
   "text/template"
   "github.com/PyramidSystemsInc/go/errors"
@@ -30,4 +31,18 @@ func Read(filePath string) []byte {
   data, err := ioutil.ReadFile(filePath)
   errors.LogIfError(err)
   return data
+}
+
+// TODO: Do some regex checking on valid values of fullPath
+func Download(url string, fullPath string) {
+  resp, err := http.Get(url)
+  errors.LogIfError(err)
+  defer resp.Body.Close()
+  body, err := ioutil.ReadAll(resp.Body)
+  errors.LogIfError(err)
+  Write(fullPath, body)
+}
+
+func Write(fullPath string, data []byte) {
+  ioutil.WriteFile(fullPath, data, 0644)
 }
