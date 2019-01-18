@@ -12,30 +12,47 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
-func LaunchFargateContainer(taskDefinitionName string, clusterName string, awsSession *session.Session) string {
+type Container struct {
+  EnvironmentVars  map[string]string
+  Essential        bool
+  ImageName        string
+  Name             string
+}
+
+func LaunchFargateContainer(taskDefinitionName string, clusterName string, securityGroupName string, awsSession *session.Session) string {
   clusterArn := findCluster(clusterName, awsSession)
   if clusterArn == "" {
     createClusterIfDoesNotExist(clusterName, awsSession)
   }
-  taskArn := runTask(taskDefinitionName, clusterName, awsSession)
+  taskArn := runTask(taskDefinitionName, clusterName, securityGroupName, awsSession)
   publicIp := findPublicIpOfTask(clusterName, taskArn, awsSession)
   return publicIp
 }
 
-func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session, imageNames... string) string {
+func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session, containers []Container) string {
   ecsClient := ecs.New(awsSession)
   ecrUrl, err := ecr.GetUrl()
   errors.LogIfError(err)
   // TODO: Remove hardcoded ecsTaskExecutionRole ARN
   // TODO: Add CPU and Memory as parameters
+  var containerDefinitions []*ecs.ContainerDefinition
+  for _, container := range containers {
+    var environmentVariables []*ecs.KeyValuePair
+    for name, value := range container.EnvironmentVars {
+      environmentVariables = append(environmentVariables, &ecs.KeyValuePair{
+        Name: aws.String(name),
+        Value: aws.String(value),
+      })
+    }
+    containerDefinitions = append(containerDefinitions, &ecs.ContainerDefinition{
+      Environment: environmentVariables,
+      Essential: aws.Bool(container.Essential),
+      Image: aws.String(str.Concat(ecrUrl, "/", container.ImageName)),
+      Name: aws.String(container.Name),
+    })
+  }
   _, err = ecsClient.RegisterTaskDefinition(&ecs.RegisterTaskDefinitionInput{
-    ContainerDefinitions: []*ecs.ContainerDefinition{
-      {
-        Essential: aws.Bool(true),
-        Image: aws.String(str.Concat(ecrUrl, "/", imageNames[0])),
-        Name: aws.String(imageNames[0]),
-      },
-    },
+    ContainerDefinitions: containerDefinitions,
     Cpu: aws.String("2048"),
     ExecutionRoleArn: aws.String("arn:aws:iam::118104210923:role/ecsTaskExecutionRole"),
     Family: aws.String(taskName),
@@ -95,9 +112,8 @@ func findNetworkInterfaceIdOfTask(clusterName string, taskArn string, awsSession
   return networkInterfaceId
 }
 
-func runTask(taskDefinitionName string, clusterName string, awsSession *session.Session) string {
+func runTask(taskDefinitionName string, clusterName string, securityGroupName string, awsSession *session.Session) string {
   ecsClient := ecs.New(awsSession)
-  // TODO: Remove hard-coded "pac-jenkins" security group name below
   result, err := ecsClient.RunTask(&ecs.RunTaskInput{
     Cluster: &clusterName,
     LaunchType: aws.String("FARGATE"),
@@ -105,7 +121,7 @@ func runTask(taskDefinitionName string, clusterName string, awsSession *session.
       AwsvpcConfiguration: &ecs.AwsVpcConfiguration{
         AssignPublicIp: aws.String("ENABLED"),
         SecurityGroups: []*string{
-          ec2.GetSecurityGroupId("pac-jenkins", awsSession),
+          ec2.GetSecurityGroupId(securityGroupName, awsSession),
         },
         Subnets: ec2.ListAllSubnetIds(awsSession),
       },
