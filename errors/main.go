@@ -1,8 +1,9 @@
 package errors
 
 import (
-  "github.com/PyramidSystemsInc/go/logger"
+  "errors"
   "os"
+  "github.com/PyramidSystemsInc/go/logger"
 )
 
 // Log a custom string as an error and halt execution
@@ -32,4 +33,8 @@ func ReturnIfError(err error) {
     logger.Err(err.Error())
     return
   }
+}
+
+func New(err string) error {
+  return errors.New(err)
 }
