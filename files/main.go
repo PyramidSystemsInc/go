@@ -57,6 +57,18 @@ func Write(fullPath string, data []byte) {
 	ioutil.WriteFile(fullPath, data, 0644)
 }
 
+func Prepend(filePath string, data []byte) {
+  content := Read(filePath)
+  newContent := str.Concat(string(data), string(content))
+  Write(filePath, []byte(newContent))
+}
+
+func Append(filePath string, data []byte) {
+  content := Read(filePath)
+  newContent := str.Concat(string(content), string(data))
+  Write(filePath, []byte(newContent))
+}
+
 func ChangePermissions(fullPath string, permissions int) {
 	if strings.Index(fullPath, ".") == 0 {
 		fullPath = str.Concat(directories.GetWorking(), fullPath[1:len(fullPath)])
