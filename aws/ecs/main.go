@@ -8,7 +8,9 @@ import (
   "github.com/aws/aws-sdk-go/service/ecs"
   "github.com/PyramidSystemsInc/go/aws/ec2"
   "github.com/PyramidSystemsInc/go/aws/ecr"
+  "github.com/PyramidSystemsInc/go/aws/util"
   "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/logger"
   "github.com/PyramidSystemsInc/go/str"
 )
 
@@ -65,6 +67,20 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
   })
   errors.LogIfError(err)
   return ""
+}
+
+func TagCluster(nameOrArn string, key string, value string, awsSession *session.Session) {
+  var arn string
+  if util.IsArn(nameOrArn) {
+    arn = nameOrArn
+  } else {
+    arn = findCluster(nameOrArn, awsSession)
+  }
+  if arn != "" {
+    tag(arn, key, value, awsSession)
+  } else {
+    logger.Err("Cluster tagging failed. The cluster could not be found by either name or ARN")
+  }
 }
 
 func createClusterIfDoesNotExist(clusterName string, awsSession *session.Session) {
@@ -130,4 +146,18 @@ func runTask(taskDefinitionName string, clusterName string, securityGroupName st
   })
   errors.LogIfError(err)
   return *result.Tasks[0].TaskArn
+}
+
+func tag(arn string, key string, value string, awsSession *session.Session) {
+  ecsClient := ecs.New(awsSession)
+  _, err := ecsClient.TagResource(&ecs.TagResourceInput{
+    ResourceArn: aws.String(arn),
+    Tags: []*ecs.Tag{
+      &ecs.Tag{
+        Key: aws.String(key),
+        Value: aws.String(value),
+      },
+    },
+  })
+  errors.LogIfError(err)
 }
