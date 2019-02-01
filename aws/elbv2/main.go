@@ -8,7 +8,7 @@ import (
   "github.com/PyramidSystemsInc/go/errors"
 )
 
-func CreateLoadBalancer(name string, awsSession *session.Session) (string, string, string) {
+func Create(name string, awsSession *session.Session) (string, string, string) {
   elbv2Client := elbv2.New(awsSession)
   loadBalancer, err := elbv2Client.CreateLoadBalancer(&elbv2.CreateLoadBalancerInput{
     Name: aws.String(name),
@@ -21,14 +21,29 @@ func CreateLoadBalancer(name string, awsSession *session.Session) (string, strin
   return *loadBalancerArn, *listenerArn, *loadBalancerUrl
 }
 
-func LoadBalancerExists(name string, awsSession *session.Session) bool {
-  elbv2Client := elbv2.New(awsSession)
-  result, err := elbv2Client.DescribeLoadBalancers(&elbv2.DescribeLoadBalancersInput{
-    Names: []*string{
-      aws.String(name),
-    },
-  })
-  return err == nil && len(result.LoadBalancers) > 0
+func Exists(nameOrArn string, awsSession *session.Session) bool {
+  loadBalancer := getLoadBalancer(nameOrArn, awsSession)
+  return loadBalancer != nil
+}
+
+func Tag(nameOrArn string, key string, value string, awsSession *session.Session) {
+  loadBalancer := getLoadBalancer(nameOrArn, awsSession)
+  if loadBalancer != nil {
+    arn := getArn(loadBalancer)
+    elbv2Client := elbv2.New(awsSession)
+    _, err := elbv2Client.AddTags(&elbv2.AddTagsInput{
+      ResourceArns: []*string{
+        aws.String(arn),
+      },
+      Tags: []*elbv2.Tag{
+        &elbv2.Tag{
+          Key: aws.String(key),
+          Value: aws.String(value),
+        },
+      },
+    })
+    errors.LogIfError(err)
+  }
 }
 
 func createDefaultListener(loadBalancerArn *string, elbv2Client *elbv2.ELBV2) *string {
@@ -53,4 +68,38 @@ func createDefaultListener(loadBalancerArn *string, elbv2Client *elbv2.ELBV2) *s
   })
   errors.QuitIfError(err)
   return listener.Listeners[0].ListenerArn
+}
+
+func getArn(loadBalancer *elbv2.LoadBalancer) string {
+  if loadBalancer != nil {
+    return *loadBalancer.LoadBalancerArn
+  }
+  return ""
+}
+
+func getLoadBalancer(nameOrArn string, awsSession *session.Session) *elbv2.LoadBalancer {
+  elbv2Client := elbv2.New(awsSession)
+  result, err := elbv2Client.DescribeLoadBalancers(&elbv2.DescribeLoadBalancersInput{
+    Names: []*string{
+      aws.String(nameOrArn),
+    },
+  })
+  if loadBalancerFound(result, err) {
+    return result.LoadBalancers[0]
+  } else {
+    result, err := elbv2Client.DescribeLoadBalancers(&elbv2.DescribeLoadBalancersInput{
+      LoadBalancerArns: []*string {
+        aws.String(nameOrArn),
+      },
+    })
+    if loadBalancerFound(result, err) {
+      return result.LoadBalancers[0]
+    } else {
+      return nil
+    }
+  }
+}
+
+func loadBalancerFound(result *elbv2.DescribeLoadBalancersOutput, err error) bool {
+  return err == nil && len(result.LoadBalancers) > 0
 }
