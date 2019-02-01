@@ -7,10 +7,11 @@ import (
   "github.com/PyramidSystemsInc/go/directories"
   "github.com/PyramidSystemsInc/go/errors"
   "github.com/PyramidSystemsInc/go/logger"
+  "github.com/PyramidSystemsInc/go/str"
 )
 
 // Runs a command as if ran from the terminal
-func Run(fullCommand string, directory string) string {
+func Run(fullCommand string, directory string) (string, error) {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
   stdout, err := cmd.StdoutPipe()
@@ -28,17 +29,14 @@ func Run(fullCommand string, directory string) string {
   errors.LogIfError(err)
   output, err := ioutil.ReadAll(stdout)
   errors.LogIfError(err)
-  _, err = ioutil.ReadAll(stderr)
+  errOutput, err := ioutil.ReadAll(stderr)
   errors.LogIfError(err)
-/*
-  if string(errorOutput) != "" {
-    logger.Warn(string(errorOutput))
-  }
-*/
   err = cmd.Wait()
-  errors.LogIfError(err)
+  if err != nil {
+    err = errors.New(str.Concat(err.Error(), ": ", strings.TrimRight(string(errOutput), "\n")))
+  }
   out := strings.TrimRight(string(output), "\n")
-  return out
+  return out, err
 }
 
 // Runs a command as if ran from the terminal

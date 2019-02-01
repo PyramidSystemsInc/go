@@ -1,14 +1,15 @@
 package ecr
 
 import (
-  "errors"
   "strings"
   "github.com/PyramidSystemsInc/go/commands"
+  "github.com/PyramidSystemsInc/go/errors"
   "github.com/PyramidSystemsInc/go/str"
 )
 
 func GetUrl() (string, error) {
-  output := commands.Run("aws ecr get-login", "")
+  output, err := commands.Run("aws ecr get-login", "")
+  errors.LogIfError(err)
   words := strings.Split(output, " ")
   url := words[len(words) - 1]
   if strings.HasPrefix(url, "https://") {
@@ -19,6 +20,7 @@ func GetUrl() (string, error) {
 }
 
 func Login(region string) {
-  output := commands.Run(str.Concat("aws ecr get-login --no-include-email --region " + region), "")
+  output, err := commands.Run(str.Concat("aws ecr get-login --no-include-email --region " + region), "")
+  errors.LogIfError(err)
   commands.Run(output, "")
 }
