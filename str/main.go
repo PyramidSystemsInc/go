@@ -16,3 +16,11 @@ func Concat(firstString string, moreStrings... string) string {
 func trimCarriageReturnSuffix(myString string) string {
   return strings.TrimSuffix(strings.TrimSuffix(myString, "\n"), "\r")
 }
+
+func IsAllLowercaseCharacters(myString string) bool {
+  return strings.IndexFunc(myString, isNotLowerCaseCharacter) == -1
+}
+
+func isNotLowerCaseCharacter(character rune) bool {
+  return character < 'a' || character > 'z'
+}
