@@ -21,6 +21,12 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
   originAccessId := str.Concat("origin-access-identity/cloudfront/", *OAIResult.CloudFrontOriginAccessIdentity.Id)
   distroResult, err := cloudfrontClient.CreateDistribution(&cloudfront.CreateDistributionInput{
     DistributionConfig: &cloudfront.DistributionConfig{
+      Aliases: &cloudfront.Aliases{
+        Items: []*string {
+          aws.String(domainName),
+        },
+        Quantity: aws.Int64(1),
+      },
       CallerReference: aws.String(time.Now().String()),
       Comment: aws.String(str.Concat("Distribution for ", domainName)),
       CustomErrorResponses: &cloudfront.CustomErrorResponses{
