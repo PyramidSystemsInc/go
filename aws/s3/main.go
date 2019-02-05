@@ -37,3 +37,19 @@ func EnableWebsiteHosting(bucketName string, awsSession *session.Session) {
   })
   errors.QuitIfError(err)
 }
+
+func TagBucket(bucketName string, key string, value string, awsSession *session.Session) {
+  s3Client := s3.New(awsSession)
+  _, err := s3Client.PutBucketTagging(&s3.PutBucketTaggingInput{
+    Bucket: aws.String(bucketName),
+    Tagging: &s3.Tagging{
+      TagSet: []*s3.Tag{
+        &s3.Tag{
+          Key: aws.String(key),
+          Value: aws.String(value),
+        },
+      },
+    },
+  })
+  errors.QuitIfError(err)
+}

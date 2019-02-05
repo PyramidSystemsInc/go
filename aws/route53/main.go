@@ -52,6 +52,28 @@ func ChangeRecord(domainName string, recordType string, recordName string, recor
   errors.QuitIfError(err)
 }
 
+func TagHostedZone(domainName string, key string, value string, awsSession *session.Session) {
+  route53Client := route53.New(awsSession)
+  id, err := findDomainNameId(domainName, route53Client)
+  errors.QuitIfError(err)
+  _, err = route53Client.ChangeTagsForResource(&route53.ChangeTagsForResourceInput{
+    AddTags: []*route53.Tag{
+      &route53.Tag{
+        Key: aws.String(key),
+        Value: aws.String(value),
+      },
+    },
+    ResourceId: aws.String(id),
+    ResourceType: aws.String("hostedzone"),
+  })
+  errors.LogIfError(err)
+}
+
+/*
+func tag(id string, awsSession *session.Session) {
+}
+*/
+
 func domainNamesMatch(domainNameA string, domainNameB string) bool {
   return domainNameA == domainNameB || domainNameA == str.Concat(domainNameB, ".") || str.Concat(domainNameA, ".") == domainNameB
 }

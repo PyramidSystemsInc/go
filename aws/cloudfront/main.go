@@ -89,3 +89,35 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
   errors.QuitIfError(err)
   return *distroResult.Distribution.DomainName
 }
+
+func TagDistribution(distributionFqdn string, key string, value string, awsSession *session.Session) {
+  cloudfrontClient := cloudfront.New(awsSession)
+  arn, err := getArn(distributionFqdn, cloudfrontClient)
+  errors.QuitIfError(err)
+  _, err = cloudfrontClient.TagResource(&cloudfront.TagResourceInput{
+    Resource: aws.String(arn),
+    Tags: &cloudfront.Tags{
+      Items: []*cloudfront.Tag{
+        &cloudfront.Tag{
+          Key: aws.String(key),
+          Value: aws.String(value),
+        },
+      },
+    },
+  })
+  errors.QuitIfError(err)
+}
+
+func getArn(distributionFqdn string, cloudfrontClient *cloudfront.CloudFront) (string, error) {
+  distributions, err := cloudfrontClient.ListDistributions(&cloudfront.ListDistributionsInput{
+    MaxItems: aws.Int64(500),
+  })
+  errors.QuitIfError(err)
+  distributionSummaries := distributions.DistributionList.Items
+  for _, distribution := range distributionSummaries {
+    if *distribution.DomainName == distributionFqdn {
+      return *distribution.ARN, nil
+    }
+  }
+  return "", errors.New(str.Concat("Distribution not found with the provided domain name: ", distributionFqdn))
+}
