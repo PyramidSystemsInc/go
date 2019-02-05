@@ -53,7 +53,7 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
       Name: aws.String(container.Name),
     })
   }
-  _, err = ecsClient.RegisterTaskDefinition(&ecs.RegisterTaskDefinitionInput{
+  result, err := ecsClient.RegisterTaskDefinition(&ecs.RegisterTaskDefinitionInput{
     ContainerDefinitions: containerDefinitions,
     Cpu: aws.String("2048"),
     ExecutionRoleArn: aws.String("arn:aws:iam::118104210923:role/ecsTaskExecutionRole"),
@@ -66,6 +66,9 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
     TaskRoleArn: aws.String("jenkins_instance"),
   })
   errors.LogIfError(err)
+  if result != nil {
+    return *result.TaskDefinition.TaskDefinitionArn
+  }
   return ""
 }
 
@@ -81,6 +84,10 @@ func TagCluster(nameOrArn string, key string, value string, awsSession *session.
   } else {
     logger.Err("Cluster tagging failed. The cluster could not be found by either name or ARN")
   }
+}
+
+func TagTaskDefinition(arn string, key string, value string, awsSession *session.Session) {
+  tag(arn, key, value, awsSession)
 }
 
 func createClusterIfDoesNotExist(clusterName string, awsSession *session.Session) {
