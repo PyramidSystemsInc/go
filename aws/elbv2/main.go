@@ -21,6 +21,14 @@ func Create(name string, awsSession *session.Session) (string, string, string) {
   return *loadBalancerArn, *listenerArn, *loadBalancerUrl
 }
 
+func Delete(arn string, awsSession *session.Session) {
+  elbv2Client := elbv2.New(awsSession)
+  _, err := elbv2Client.DeleteLoadBalancer(&elbv2.DeleteLoadBalancerInput{
+    LoadBalancerArn: aws.String(arn),
+  })
+  errors.QuitIfError(err)
+}
+
 func Exists(nameOrArn string, awsSession *session.Session) bool {
   loadBalancer := getLoadBalancer(nameOrArn, awsSession)
   return loadBalancer != nil

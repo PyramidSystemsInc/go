@@ -4,6 +4,7 @@ import (
   "strings"
 )
 
-func IsArn(arn string) bool {
-  return strings.HasPrefix(arn, "arn:")
+func IsArn(possibleArn string) bool {
+  arnPrefix := "arn:aws:"
+  return strings.HasPrefix(possibleArn, arnPrefix)
 }

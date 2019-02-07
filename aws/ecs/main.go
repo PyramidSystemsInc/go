@@ -21,6 +21,22 @@ type Container struct {
   Name             string
 }
 
+func DeleteCluster(arnOrName string, awsSession *session.Session) {
+  ecsClient := ecs.New(awsSession)
+  _, err := ecsClient.DeleteCluster(&ecs.DeleteClusterInput{
+    Cluster: aws.String(arnOrName),
+  })
+  errors.QuitIfError(err)
+}
+
+func DeregisterTaskDefinition(arn string, awsSession *session.Session) {
+  ecsClient := ecs.New(awsSession)
+  _, err := ecsClient.DeregisterTaskDefinition(&ecs.DeregisterTaskDefinitionInput{
+    TaskDefinition: aws.String(arn),
+  })
+  errors.QuitIfError(err)
+}
+
 func LaunchFargateContainer(taskDefinitionName string, clusterName string, securityGroupName string, awsSession *session.Session) string {
   clusterArn := findCluster(clusterName, awsSession)
   if clusterArn == "" {
@@ -70,6 +86,27 @@ func RegisterFargateTaskDefinition(taskName string, awsSession *session.Session,
     return *result.TaskDefinition.TaskDefinitionArn
   }
   return ""
+}
+
+func StopAllTasksInCluster(clusterArnOrName string, awsSession *session.Session) {
+  ecsClient := ecs.New(awsSession)
+  tasksInCluster, err := ecsClient.ListTasks(&ecs.ListTasksInput{
+    Cluster: aws.String(clusterArnOrName),
+  })
+  errors.QuitIfError(err)
+  for _, taskArn := range tasksInCluster.TaskArns {
+    StopTask(*taskArn, clusterArnOrName, awsSession)
+  }
+}
+
+func StopTask(taskIdOrArn string, clusterArnOrName string, awsSession *session.Session) {
+  ecsClient := ecs.New(awsSession)
+  _, err := ecsClient.StopTask(&ecs.StopTaskInput{
+    Cluster: aws.String(clusterArnOrName),
+    Reason: aws.String("Stopped by github.com/PyramidSystemsInc/aws/ecs package"),
+    Task: aws.String(taskIdOrArn),
+  })
+  errors.QuitIfError(err)
 }
 
 func TagCluster(nameOrArn string, key string, value string, awsSession *session.Session) {
