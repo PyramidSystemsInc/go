@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+  "path"
 	"strings"
 	"text/template"
 
@@ -19,9 +20,32 @@ func CreateBlank(filePath string) *os.File {
 	return file
 }
 
+func FindUpTree(fileName string) string {
+  workingDirectory := directories.GetWorking()
+  directory := workingDirectory
+  for {
+    filePath := path.Join(directory, fileName)
+    if Exists(filePath) {
+      return directory
+    }
+    if directory == "/" {
+      break
+    }
+    directory = path.Join(directory, "..")
+  }
+  return ""
+}
+
+func Exists(filePath string) bool {
+  filePath = path.Clean(filePath)
+  if _, err := os.Stat(filePath); os.IsNotExist(err) {
+    return false
+  }
+  return true
+}
+
 // Ensure the full path exists
 func EnsurePath(filePath string) {
-
 	os.MkdirAll(filePath, 0755)
 }
 

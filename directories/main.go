@@ -3,11 +3,13 @@ package directories
 import (
   "os"
   "os/user"
+  "path"
   "github.com/PyramidSystemsInc/go/errors"
 )
 
 // Creates a directory (if it does not already exist)
 func Create(directory string) {
+  directory = path.Clean(directory)
   err := os.MkdirAll(directory, os.ModePerm)
   errors.QuitIfError(err)
 }
@@ -23,5 +25,5 @@ func GetHome() string {
 func GetWorking() string {
   workingDirectory, err := os.Getwd()
   errors.LogIfError(err)
-  return workingDirectory
+  return path.Clean(workingDirectory)
 }
