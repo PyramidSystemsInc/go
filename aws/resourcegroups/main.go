@@ -52,18 +52,24 @@ func deleteResource(resource *resourcegroups.ResourceIdentifier, awsSession *ses
   switch(*resource.ResourceType) {
     case "AWS::DynamoDB::Table":
       dynamodb.DeleteTable(arn, awsSession)
+      logger.Info("Deleted a DynamoDB table")
     case "AWS::ECS::Cluster":
       ecs.StopAllTasksInCluster(arn, awsSession)
       ecs.DeleteCluster(arn, awsSession)
+      logger.Info("Stopped all tasks and deleted an ECS cluster")
     case "AWS::ECS::TaskDefinition":
       ecs.DeregisterTaskDefinition(arn, awsSession)
+      logger.Info("Deregistered an ECS task definition")
     case "AWS::ElasticLoadBalancingV2::LoadBalancer":
       elbv2.Delete(arn, awsSession)
+      logger.Info("Deleted an ELBV2 load balancer")
     case "AWS::Lambda::Function":
       lambda.Delete(arn, awsSession)
+      logger.Info("Deleted a Lambda function")
     case "AWS::S3::Bucket":
       s3.EmptyBucket(arn, awsSession)
       s3.DeleteBucket(arn, awsSession)
+      logger.Info("Deleted an S3 bucket")
     default:
       logger.Err(str.Concat("There is a resource of type ", *resource.ResourceType, " which the github.com/PyramidSystemsInc/go/aws/resourcegroups package does not know how to handle"))
   }

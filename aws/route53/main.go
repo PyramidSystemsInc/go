@@ -52,6 +52,72 @@ func ChangeRecord(domainName string, recordType string, recordName string, recor
   errors.QuitIfError(err)
 }
 
+func DeleteHostedZone(domainName string, awsSession *session.Session) {
+  route53Client := route53.New(awsSession)
+  hostedZoneId, _ := findDomainNameId(domainName, route53Client)
+  if hostedZoneId != "" {
+    listResult, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+      HostedZoneId: aws.String(hostedZoneId),
+    })
+    errors.LogIfError(err)
+    records := listResult.ResourceRecordSets
+    var batchChanges []*route53.Change
+    for _, record := range records {
+      if *record.Type != "SOA" && *record.Type != "NS" {
+        batchChanges = append(batchChanges, &route53.Change{
+          Action: aws.String("DELETE"),
+          ResourceRecordSet: record,
+        })
+      }
+    }
+    if len(batchChanges) > 0 {
+      _, err = route53Client.ChangeResourceRecordSets(&route53.ChangeResourceRecordSetsInput{
+        ChangeBatch: &route53.ChangeBatch{
+          Changes: batchChanges,
+          Comment: aws.String("Deleted record(s) as part of call to PyramidSystemsInc/go/aws/route53/DeleteHostedZone"),
+        },
+        HostedZoneId: aws.String(hostedZoneId),
+      })
+      errors.LogIfError(err)
+    }
+    _, err = route53Client.DeleteHostedZone(&route53.DeleteHostedZoneInput{
+      Id: aws.String(hostedZoneId),
+    })
+    errors.LogIfError(err)
+  }
+}
+
+func DeleteRecord(domainName string, recordName string, awsSession *session.Session) {
+  route53Client := route53.New(awsSession)
+  hostedZoneId, _ := findDomainNameId(domainName, route53Client)
+  if hostedZoneId != "" {
+    listResult, err := route53Client.ListResourceRecordSets(&route53.ListResourceRecordSetsInput{
+      HostedZoneId: aws.String(hostedZoneId),
+    })
+    errors.LogIfError(err)
+    records := listResult.ResourceRecordSets
+    var batchChanges []*route53.Change
+    for _, record := range records {
+      if *record.Name == recordName {
+        batchChanges = append(batchChanges, &route53.Change{
+          Action: aws.String("DELETE"),
+          ResourceRecordSet: record,
+        })
+      }
+    }
+    if len(batchChanges) > 0 {
+      _, err = route53Client.ChangeResourceRecordSets(&route53.ChangeResourceRecordSetsInput{
+        ChangeBatch: &route53.ChangeBatch{
+          Changes: batchChanges,
+          Comment: aws.String("Deleted record(s) as part of call to PyramidSystemsInc/go/aws/route53/DeleteRecord"),
+        },
+        HostedZoneId: aws.String(hostedZoneId),
+      })
+      errors.LogIfError(err)
+    }
+  }
+}
+
 func TagHostedZone(domainName string, key string, value string, awsSession *session.Session) {
   route53Client := route53.New(awsSession)
   id, err := findDomainNameId(domainName, route53Client)
@@ -68,11 +134,6 @@ func TagHostedZone(domainName string, key string, value string, awsSession *sess
   })
   errors.LogIfError(err)
 }
-
-/*
-func tag(id string, awsSession *session.Session) {
-}
-*/
 
 func domainNamesMatch(domainNameA string, domainNameB string) bool {
   return domainNameA == domainNameB || domainNameA == str.Concat(domainNameB, ".") || str.Concat(domainNameA, ".") == domainNameB

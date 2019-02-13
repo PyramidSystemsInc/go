@@ -13,7 +13,7 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
   cloudfrontClient := cloudfront.New(awsSession)
   OAIResult, err := cloudfrontClient.CreateCloudFrontOriginAccessIdentity(&cloudfront.CreateCloudFrontOriginAccessIdentityInput{
     CloudFrontOriginAccessIdentityConfig: &cloudfront.OriginAccessIdentityConfig{
-      CallerReference: aws.String(time.Now().String()),
+      CallerReference: createCallerReference(),
       Comment: aws.String(str.Concat("Identity for ", domainName)),
     },
   })
@@ -27,7 +27,7 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
         },
         Quantity: aws.Int64(1),
       },
-      CallerReference: aws.String(time.Now().String()),
+      CallerReference: createCallerReference(),
       Comment: aws.String(str.Concat("Distribution for ", domainName)),
       CustomErrorResponses: &cloudfront.CustomErrorResponses{
         Items: []*cloudfront.CustomErrorResponse{
@@ -90,6 +90,26 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
   return *distroResult.Distribution.DomainName
 }
 
+func DisableDistribution(alias string, awsSession *session.Session) {
+  cloudfrontClient := cloudfront.New(awsSession)
+  distributionId := getDistributionIdUsingAlias(alias, cloudfrontClient)
+  if distributionId != "" {
+    result, err := cloudfrontClient.GetDistributionConfig(&cloudfront.GetDistributionConfigInput{
+      Id: aws.String(distributionId),
+    })
+    errors.LogIfError(err)
+    distributionConfig := result.DistributionConfig
+    distributionConfig.SetEnabled(false)
+    eTag := getDistributionETag(distributionId, cloudfrontClient)
+    _, err = cloudfrontClient.UpdateDistribution(&cloudfront.UpdateDistributionInput {
+      DistributionConfig: distributionConfig,
+      Id: aws.String(distributionId),
+      IfMatch: aws.String(eTag),
+    })
+    errors.LogIfError(err)
+  }
+}
+
 func TagDistribution(distributionFqdn string, key string, value string, awsSession *session.Session) {
   cloudfrontClient := cloudfront.New(awsSession)
   arn, err := getArn(distributionFqdn, cloudfrontClient)
@@ -121,3 +141,55 @@ func getArn(distributionFqdn string, cloudfrontClient *cloudfront.CloudFront) (s
   }
   return "", errors.New(str.Concat("Distribution not found with the provided domain name: ", distributionFqdn))
 }
+
+func getDistributionIdUsingAlias(targetAlias string, cloudfrontClient *cloudfront.CloudFront) string {
+  distributions, err := cloudfrontClient.ListDistributions(&cloudfront.ListDistributionsInput{
+    MaxItems: aws.Int64(500),
+  })
+  errors.QuitIfError(err)
+  distributionSummaries := distributions.DistributionList.Items
+  for _, distributionSummary := range distributionSummaries {
+    if distributionSummary.Aliases != nil {
+      for _, alias := range distributionSummary.Aliases.Items {
+        if *alias == targetAlias {
+          return *distributionSummary.Id
+        }
+      }
+    }
+  }
+  return ""
+}
+
+func createCallerReference() *string {
+  return aws.String(time.Now().String())
+}
+
+func getDistributionETag(id string, cloudfrontClient *cloudfront.CloudFront) string {
+  distribution, err := cloudfrontClient.GetDistribution(&cloudfront.GetDistributionInput{
+    Id: aws.String(id),
+  })
+  errors.QuitIfError(err)
+  return *distribution.ETag
+}
+/*
+func getOriginAccessIdentityETagByAlias(targetAlias string, cloudfrontClient *cloudfront.CloudFront) (string, error) {
+  originAccessIdentities, err := cloudfrontClient.ListCloudFrontOriginAccessIdentities(&cloudfront.ListCloudFrontOriginAccessIdentitiesInput{
+    MaxItems: aws.Int64(500),
+  })
+  var id string
+  for _, originAccessIdentity := range originAccessIdentities.CloudFrontOriginAccessIdentityList.Items {
+    if strings.HasSuffix(*originAccessIdentity.Comment, targetAlias) {
+      id = *originAccessIdentity.Id
+    }
+  }
+  errors.QuitIfError(err)
+  if id != "" {
+    originAccessIdentity, err := cloudfrontClient.GetCloudFrontOriginAccessIdentity(&cloudfront.GetCloudFrontOriginAccessIdentityInput {
+      Id: aws.String(id),
+    })
+    errors.QuitIfError(err)
+    return *originAccessIdentity.ETag, nil
+  }
+  return "", errors.New(str.Concat("Origin access identity not found using alias: ", targetAlias))
+}
+*/
