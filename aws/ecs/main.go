@@ -174,6 +174,7 @@ func findNetworkInterfaceIdOfTask(clusterName string, taskArn string, awsSession
 
 func runTask(taskDefinitionName string, clusterName string, securityGroupName string, awsSession *session.Session) string {
   ecsClient := ecs.New(awsSession)
+  vpcId := "vpc-76cf681f"
   result, err := ecsClient.RunTask(&ecs.RunTaskInput{
     Cluster: &clusterName,
     LaunchType: aws.String("FARGATE"),
@@ -183,7 +184,7 @@ func runTask(taskDefinitionName string, clusterName string, securityGroupName st
         SecurityGroups: []*string{
           ec2.GetSecurityGroupId(securityGroupName, awsSession),
         },
-        Subnets: ec2.ListAllSubnetIds(awsSession),
+        Subnets: ec2.ListAllSubnetIds(vpcId, awsSession),
       },
     },
     TaskDefinition: &taskDefinitionName,
