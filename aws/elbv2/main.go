@@ -10,9 +10,10 @@ import (
 
 func Create(name string, awsSession *session.Session) (string, string, string) {
   elbv2Client := elbv2.New(awsSession)
+  vpcId := "vpc-76cf681f"
   loadBalancer, err := elbv2Client.CreateLoadBalancer(&elbv2.CreateLoadBalancerInput{
     Name: aws.String(name),
-    Subnets: ec2.ListAllSubnetIds(awsSession),
+    Subnets: ec2.ListAllSubnetIds(vpcId, awsSession),
   })
   errors.QuitIfError(err)
   loadBalancerArn := loadBalancer.LoadBalancers[0].LoadBalancerArn

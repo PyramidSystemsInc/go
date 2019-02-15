@@ -1,6 +1,7 @@
 package ec2
 
 import (
+  "fmt"
   "github.com/aws/aws-sdk-go/aws"
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/ec2"
@@ -18,13 +19,16 @@ func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *sessi
   return *result.NetworkInterfaces[0].Association.PublicIp
 }
 
-func ListAllSubnetIds(awsSession *session.Session) []*string {
+func ListAllSubnetIds(vpcId string, awsSession *session.Session) []*string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeSubnets(&ec2.DescribeSubnetsInput{})
+  fmt.Println(result)
   errors.LogIfError(err)
   subnets := make([]*string, 0)
   for _, subnet := range result.Subnets {
-    subnets = append(subnets, subnet.SubnetId)
+    if *subnet.VpcId == vpcId {
+      subnets = append(subnets, subnet.SubnetId)
+    }
   }
   return subnets
 }
