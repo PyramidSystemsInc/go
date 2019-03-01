@@ -190,6 +190,10 @@ func runTask(taskDefinitionName string, clusterName string, securityGroupName st
     TaskDefinition: &taskDefinitionName,
   })
   errors.LogIfError(err)
+  if len(result.Failures) > 0 {
+    err = errors.New(str.Concat("The ECS task named ", taskDefinitionName, " had a failure. Did you reach the max number of ECS tasks you are allowed to run?"))
+    errors.QuitIfError(err)
+  }
   return *result.Tasks[0].TaskArn
 }
 
