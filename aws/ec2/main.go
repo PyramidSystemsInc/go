@@ -5,6 +5,7 @@ import (
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/ec2"
   "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/str"
 )
 
 func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *session.Session) string {
@@ -15,6 +16,10 @@ func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *sessi
     },
   })
   errors.LogIfError(err)
+  if len(result.NetworkInterfaces) == 0 {
+    notFoundError := str.Concat("A network interface with ID ", networkInterfaceId, " was not found")
+    errors.LogAndQuit(notFoundError)
+  }
   return *result.NetworkInterfaces[0].Association.PublicIp
 }
 
