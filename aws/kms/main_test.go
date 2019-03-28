@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/kms"
 )
 
-// TestCreateEncryptionKey tests the successful creation of an encryption key by
-// calling the DescribeKey function. If an error is returned, the key wasn't created.
+// TestCreateEncryptionKey creates an encryption key then tests the successful creation of an encryption key by
+// calling the DescribeKey function using the created keys id. If an error is returned, the key wasn't created.
 func TestCreateEncryptionKey(t *testing.T) {
 	session := pacaws.CreateAwsSession("us-east-2")
 
@@ -45,6 +45,8 @@ func TestCreateEncryptionKey(t *testing.T) {
 		}
 		return
 	}
+
+	ScheduleEncryptionKeyDeletion(key, session)
 }
 
 // TestScheduleEncryptionKeyDeletion creates an encryption key and then attempts to schedule it for deletion.

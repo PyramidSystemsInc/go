@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	pacaws "github.com/PyramidSystemsInc/go/aws"
+	packms "github.com/PyramidSystemsInc/go/aws/kms"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
@@ -17,7 +18,7 @@ func TestEncryptBucket(t *testing.T) {
 	session := pacaws.CreateAwsSession("us-east-2")
 
 	svc := s3.New(session)
-	name := "saveferris"
+	name := "testbucketencrypt"
 
 	input := &s3.CreateBucketInput{
 		ACL:    aws.String("private"),
@@ -31,11 +32,11 @@ func TestEncryptBucket(t *testing.T) {
 	}
 
 	//encrypt bucket
-	key := "fc8181c8-a0ca-4a95-9bd7-8673b179dee5"
+	key := packms.CreateEncryptionKey(session)
 	EncryptBucket(name, key)
 	einput := &s3.GetBucketEncryptionInput{Bucket: aws.String(name)}
 
-	//test bucket is encrypted
+	//test that bucket is encrypted
 
 	result, err := svc.GetBucketEncryption(einput)
 
@@ -45,6 +46,10 @@ func TestEncryptBucket(t *testing.T) {
 
 	fmt.Println(result)
 
+	//delete bucket
 	dinput := &s3.DeleteBucketInput{Bucket: aws.String(name)}
 	svc.DeleteBucket(dinput)
+
+	//schedule encryption key to be deleted
+	packms.ScheduleEncryptionKeyDeletion(key, session)
 }
