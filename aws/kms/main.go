@@ -11,12 +11,18 @@ import (
 )
 
 // CreateEncryptionKey creates a customer managed key in the AWS Key Management Service
-// and returns the encryption key id.
-func CreateEncryptionKey(awsSession *session.Session) (key string) {
+// and returns the encryption key id. The session holds the region information, the k and v
+// are key/value pairs used to tag the encryption key for later identification.
+func CreateEncryptionKey(awsSession *session.Session, k string, v string) (key string) {
 	kmsClient := kms.New(awsSession)
 
 	result, err := kmsClient.CreateKey(&kms.CreateKeyInput{
-		Tags: []*kms.Tag{},
+		Tags: []*kms.Tag{
+			{
+				TagKey:   aws.String(k),
+				TagValue: aws.String(v),
+			},
+		},
 	})
 
 	if err != nil {

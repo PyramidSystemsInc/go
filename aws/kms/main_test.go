@@ -15,7 +15,7 @@ import (
 func TestCreateEncryptionKey(t *testing.T) {
 	session := pacaws.CreateAwsSession("us-east-2")
 
-	key := CreateEncryptionKey(session)
+	key := CreateEncryptionKey(session, "createdBy", "TestCreateEncryptionKey unit test")
 
 	svc := kms.New(session)
 	input := &kms.DescribeKeyInput{
@@ -52,6 +52,6 @@ func TestCreateEncryptionKey(t *testing.T) {
 // TestScheduleEncryptionKeyDeletion creates an encryption key and then attempts to schedule it for deletion.
 func TestScheduleEncryptionKeyDeletion(t *testing.T) {
 	session := pacaws.CreateAwsSession("us-east-2")
-	key := CreateEncryptionKey(session)
+	key := CreateEncryptionKey(session, "createdBy", "TestScheduleEncryptionKeyDeletion unit test")
 	ScheduleEncryptionKeyDeletion(key, session)
 }
