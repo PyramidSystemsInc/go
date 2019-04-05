@@ -45,7 +45,7 @@ func TestCreateTable(t *testing.T) {
 	// waiting 10 seconds for table to be created otherwise we'll get an error when we attempt to destroy it
 
 	time.Sleep(10 * time.Second)
-	
+
 	describe := &dynamodb.DescribeTableInput{
 		TableName: aws.String(name),
 	}
