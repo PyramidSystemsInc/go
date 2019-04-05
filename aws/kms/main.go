@@ -68,3 +68,8 @@ func ScheduleEncryptionKeyDeletion(key string, awsSession *session.Session) {
 
 	fmt.Println(result)
 }
+
+// GetParameter returns the value stored in the systems manager paramter store at the given path
+func GetParameter(awsSession *session.Session, k, v, path string) {
+	//
+}
