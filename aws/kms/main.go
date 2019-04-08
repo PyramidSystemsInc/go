@@ -26,16 +26,20 @@ func CreateEncryptionKey(awsSession *session.Session, k string, v string) (key s
 	})
 
 	if err != nil {
-		fmt.Println("Got error creating key: ", err)
+		fmt.Println("error creating encryption key: ", err)
 		os.Exit(1)
 	}
 
-	alias := "pac-" + v
+	alias := "/pac/" + v
 
 	_, err = kmsClient.CreateAlias(&kms.CreateAliasInput{
 		AliasName:   aws.String(alias),
 		TargetKeyId: aws.String(*result.KeyMetadata.KeyId),
 	})
+
+	if err != nil {
+		fmt.Println("error creating encryption key alias: ", err)
+	}
 
 	return *result.KeyMetadata.KeyId
 }
