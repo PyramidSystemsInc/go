@@ -2,6 +2,7 @@ package logger
 
 import (
   "fmt"
+  "os"
   "time"
 )
 
@@ -15,7 +16,7 @@ var logLevel LogLevel
 
 func Err(message string) {
   if (logLevel.Err) {
-    fmt.Println("[ " + timestamp() + "   ERROR ]: " + message)
+    fmt.Fprintln(os.Stderr, "[ " + timestamp() + "   ERROR ]: " + message)
   }
 }
 
