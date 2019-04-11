@@ -8,6 +8,20 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
+func GetAllVpcCidrBlocks(awsSession *session.Session) []string {
+  ec2Client := ec2.New(awsSession)
+  result, err := ec2Client.DescribeVpcs(&ec2.DescribeVpcsInput{})
+  errors.LogIfError(err)
+  if len(result.Vpcs) == 0 {
+    errors.LogAndQuit("ERROR: VPC information was queried, but no VPCs were found")
+  }
+  var cidrBlocks []string
+  for _, vpc := range result.Vpcs {
+    cidrBlocks = append(cidrBlocks, *vpc.CidrBlock)
+  }
+  return cidrBlocks
+}
+
 func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *session.Session) string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{
