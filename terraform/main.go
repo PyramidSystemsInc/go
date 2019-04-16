@@ -6,6 +6,8 @@ import (
 
   "github.com/PyramidSystemsInc/go/commands"
   "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/files"
+	"github.com/PyramidSystemsInc/go/logger"
   "github.com/PyramidSystemsInc/go/str"
 )
 
@@ -50,6 +52,21 @@ func Apply(directoryToRunFrom string) string {
     errors.LogAndQuit(str.Concat("ERROR: Applying the Terraform plan failed with the following error: ", err.Error()))
   }
   return output
+}
+
+// Destroys all resources managed by Terraform
+func Destroy(directoryToRunFrom string) string {
+  defer timeTrack(time.Now(), "Terraform destroy")
+  if files.Exists(str.Concat(directoryToRunFrom, "/.terraform")) {
+    logger.Info("Terraform is destroying...")
+    output, err := commands.Run("terraform destroy -auto-approve", directoryToRunFrom)
+    if err != nil {
+      errors.LogAndQuit(str.Concat("ERROR: Terraform destroy failed with the following error: ", err.Error()))
+    }
+    return output
+  } else {
+    return str.Concat("No Terraform resources to destroy in ", directoryToRunFrom)
+  }
 }
 
 func timeTrack(start time.Time, name string) {
