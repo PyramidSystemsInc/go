@@ -1,23 +1,28 @@
 package files
 
 import (
-	"io/ioutil"
-	"net/http"
-	"os"
+  "io/ioutil"
+  "net/http"
+  "os"
   "path"
-	"strings"
-	"text/template"
+  "strings"
+  "text/template"
 
-	"github.com/PyramidSystemsInc/go/directories"
-	"github.com/PyramidSystemsInc/go/errors"
-	"github.com/PyramidSystemsInc/go/str"
+  "github.com/PyramidSystemsInc/go/directories"
+  "github.com/PyramidSystemsInc/go/errors"
+  "github.com/PyramidSystemsInc/go/str"
 )
+
+func Delete(filePath string) error {
+  err := os.Remove(filePath)
+  return err
+}
 
 // Simply creates a file given a full path (including file name and extension)
 func CreateBlank(filePath string) *os.File {
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0755)
-	errors.LogIfError(err)
-	return file
+  file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0755)
+  errors.LogIfError(err)
+  return file
 }
 
 func FindUpTree(fileName string) string {
@@ -46,39 +51,44 @@ func Exists(filePath string) bool {
 
 // Ensure the full path exists
 func EnsurePath(filePath string) {
-	os.MkdirAll(filePath, 0755)
+  os.MkdirAll(filePath, 0755)
 }
 
 // Creates a file and populates it with a given template
 // If a template features the following syntax: {{.mapKey}}, the value of
 //   'mapKey' in the config variable will be inserted
 func CreateFromTemplate(filePath string, pattern string, config map[string]string) {
-	t := template.Must(template.New("t").Parse(pattern))
-	file, err := os.Create(filePath)
-	errors.QuitIfError(err)
-	err = t.Execute(file, config)
-	errors.QuitIfError(err)
-	file.Close()
+  t := template.Must(template.New("t").Parse(pattern))
+  file, err := os.Create(filePath)
+  errors.QuitIfError(err)
+  err = t.Execute(file, config)
+  errors.QuitIfError(err)
+  file.Close()
 }
 
 func Read(filePath string) []byte {
-	data, err := ioutil.ReadFile(filePath)
-	errors.LogIfError(err)
-	return data
+  data, err := ioutil.ReadFile(filePath)
+  errors.LogIfError(err)
+  return data
 }
 
 // TODO: Do some regex checking on valid values of fullPath
-func Download(url string, fullPath string) {
-	resp, err := http.Get(url)
-	errors.LogIfError(err)
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	errors.LogIfError(err)
-	Write(fullPath, body)
+func Download(url string, fullPath string) error {
+  resp, err := http.Get(url)
+  if err != nil {
+    return err
+  }
+  defer resp.Body.Close()
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return err
+  }
+  Write(fullPath, body)
+  return err
 }
 
 func Write(fullPath string, data []byte) {
-	ioutil.WriteFile(fullPath, data, 0644)
+  ioutil.WriteFile(fullPath, data, 0644)
 }
 
 func Prepend(filePath string, data []byte) {
@@ -94,9 +104,9 @@ func Append(filePath string, data []byte) {
 }
 
 func ChangePermissions(fullPath string, permissions int) {
-	if strings.Index(fullPath, ".") == 0 {
-		fullPath = str.Concat(directories.GetWorking(), fullPath[1:len(fullPath)])
-	}
-	err := os.Chmod(fullPath, os.FileMode(permissions))
-	errors.LogIfError(err)
+  if strings.Index(fullPath, ".") == 0 {
+    fullPath = str.Concat(directories.GetWorking(), fullPath[1:len(fullPath)])
+  }
+  err := os.Chmod(fullPath, os.FileMode(permissions))
+  errors.LogIfError(err)
 }
