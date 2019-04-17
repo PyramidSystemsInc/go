@@ -1,6 +1,7 @@
 package files
 
 import (
+  "bufio"
   "io/ioutil"
   "net/http"
   "os"
@@ -101,6 +102,26 @@ func Append(filePath string, data []byte) {
   content := Read(filePath)
   newContent := str.Concat(string(content), string(data))
   Write(filePath, []byte(newContent))
+}
+
+func AppendBelow(filePath string, markerLine string, data string) {
+  var newFile string
+  file, err := os.Open(filePath)
+  if err != nil {
+    errors.LogAndQuit(err.Error())
+  }
+  defer file.Close()
+  scanner := bufio.NewScanner(file)
+  for scanner.Scan() {
+    newFile += scanner.Text() + "\n"
+    if scanner.Text() == markerLine {
+      newFile += data + "\n"
+    }
+  }
+  if err := scanner.Err(); err != nil {
+    errors.LogAndQuit(err.Error())
+  }
+  Write(filePath, []byte(newFile))
 }
 
 func ChangePermissions(fullPath string, permissions int) {
