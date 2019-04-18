@@ -30,7 +30,7 @@ func CreateEncryptionKey(awsSession *session.Session, k string, v string) (key s
 		os.Exit(1)
 	}
 
-	alias := "/pac/" + v
+	alias := "alias/pac/" + v
 
 	_, err = kmsClient.CreateAlias(&kms.CreateAliasInput{
 		AliasName:   aws.String(alias),
