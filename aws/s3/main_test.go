@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	pacaws "github.com/PyramidSystemsInc/go/aws"
 	packms "github.com/PyramidSystemsInc/go/aws/kms"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -32,7 +34,7 @@ func TestEncryptBucket(t *testing.T) {
 	}
 
 	//encrypt bucket
-	key := packms.CreateEncryptionKey(session)
+	key := packms.CreateEncryptionKey(session, "pac-project", "test")
 	EncryptBucket(name, key)
 	einput := &s3.GetBucketEncryptionInput{Bucket: aws.String(name)}
 
@@ -52,4 +54,57 @@ func TestEncryptBucket(t *testing.T) {
 
 	//schedule encryption key to be deleted
 	packms.ScheduleEncryptionKeyDeletion(key, session)
+}
+
+// TestEnableVersioning tests when turning on versinong on an S3 bucket is successful.
+func TestEnableVersioning(t *testing.T) {
+	//create bucket
+	session := pacaws.CreateAwsSession("us-east-2")
+
+	svc := s3.New(session)
+	name := "testbucketversioningagogo"
+
+	input := &s3.CreateBucketInput{
+		ACL:    aws.String("private"),
+		Bucket: aws.String(name),
+	}
+
+	_, err := svc.CreateBucket(input)
+
+	if err != nil {
+		log.Fatal("can't create bucket", err)
+	}
+
+	//add versioning
+	EnableVersioning(name)
+
+	//test versioning
+	vinput := &s3.GetBucketVersioningInput{
+		Bucket: aws.String(name),
+	}
+
+	result, err := svc.GetBucketVersioning(vinput)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	status, _ := json.Marshal(result.Status)
+
+	if string(status) == "null" {
+		t.Error("unable to enable versioning")
+	}
+
+	//delete bucket
+	dinput := &s3.DeleteBucketInput{Bucket: aws.String(name)}
+	svc.DeleteBucket(dinput)
 }
