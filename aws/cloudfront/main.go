@@ -2,6 +2,7 @@ package cloudfront
 
 import (
   "time"
+
   "github.com/aws/aws-sdk-go/aws"
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/cloudfront"
@@ -9,6 +10,7 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
+// CreateDistributionFromS3Bucket - Creates an AWS CloudFront distribution from an S3 bucket
 func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Session) string {
   cloudfrontClient := cloudfront.New(awsSession)
   OAIResult, err := cloudfrontClient.CreateCloudFrontOriginAccessIdentity(&cloudfront.CreateCloudFrontOriginAccessIdentityInput{
@@ -90,6 +92,7 @@ func CreateDistributionFromS3Bucket(domainName string, awsSession *session.Sessi
   return *distroResult.Distribution.DomainName
 }
 
+// DisableDistribution - Disables an AWS CloudFront distribution
 func DisableDistribution(alias string, awsSession *session.Session) {
   cloudfrontClient := cloudfront.New(awsSession)
   distributionId := getDistributionIdUsingAlias(alias, cloudfrontClient)
@@ -110,6 +113,7 @@ func DisableDistribution(alias string, awsSession *session.Session) {
   }
 }
 
+// TagDistribution - Adds a tag to an AWS CloudFront distribution
 func TagDistribution(distributionFqdn string, key string, value string, awsSession *session.Session) {
   cloudfrontClient := cloudfront.New(awsSession)
   arn, err := getArn(distributionFqdn, cloudfrontClient)
@@ -171,6 +175,7 @@ func getDistributionETag(id string, cloudfrontClient *cloudfront.CloudFront) str
   errors.QuitIfError(err)
   return *distribution.ETag
 }
+
 /*
 func getOriginAccessIdentityETagByAlias(targetAlias string, cloudfrontClient *cloudfront.CloudFront) (string, error) {
   originAccessIdentities, err := cloudfrontClient.ListCloudFrontOriginAccessIdentities(&cloudfront.ListCloudFrontOriginAccessIdentitiesInput{

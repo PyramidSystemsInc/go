@@ -8,6 +8,7 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
+// GetAllVpcCidrBlocks - Returns all CIDR blocks in use by VPCs
 func GetAllVpcCidrBlocks(awsSession *session.Session) []string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeVpcs(&ec2.DescribeVpcsInput{})
@@ -22,6 +23,7 @@ func GetAllVpcCidrBlocks(awsSession *session.Session) []string {
   return cidrBlocks
 }
 
+// FindPublicIpOfNetworkInterface - Given a network interface ID, returns the public IP associated with it
 func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *session.Session) string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{
@@ -37,6 +39,7 @@ func FindPublicIpOfNetworkInterface(networkInterfaceId string, awsSession *sessi
   return *result.NetworkInterfaces[0].Association.PublicIp
 }
 
+// ListAllSubnetIds - Given a VPC ID, returns all the IDs of the subnets within it
 func ListAllSubnetIds(vpcId string, awsSession *session.Session) []*string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeSubnets(&ec2.DescribeSubnetsInput{})
@@ -50,6 +53,7 @@ func ListAllSubnetIds(vpcId string, awsSession *session.Session) []*string {
   return subnets
 }
 
+// GetSecurityGroupId - Given the name of a security group, returns the ID of that security group
 func GetSecurityGroupId(securityGroupName string, awsSession *session.Session) *string {
   ec2Client := ec2.New(awsSession)
   result, err := ec2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{

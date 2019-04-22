@@ -10,7 +10,7 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
-// Runs a command as if ran from the terminal
+// Run - Runs a command as if ran from the terminal
 func Run(fullCommand string, directory string) (string, error) {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
@@ -39,7 +39,7 @@ func Run(fullCommand string, directory string) (string, error) {
   return out, err
 }
 
-// Runs a command as if ran from the terminal
+// RunWithStdin - Runs a command as if ran from the terminal
 func RunWithStdin(fullCommand string, data string, directory string) string {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
