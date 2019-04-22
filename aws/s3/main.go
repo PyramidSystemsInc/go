@@ -156,36 +156,6 @@ func EnableVersioning(bucket string) {
   }
 }
 
-func DisableVersioning(bucket string) {
-  sess := session.Must(session.NewSessionWithOptions(session.Options{
-    SharedConfigState: session.SharedConfigEnable,
-  }))
-
-  svc := s3.New(sess)
-  input := &s3.PutBucketVersioningInput{
-    Bucket: aws.String(bucket),
-    VersioningConfiguration: &s3.VersioningConfiguration{
-      MFADelete: aws.String("Disabled"),
-      Status:    aws.String("Suspended"),
-    },
-  }
-
-  _, err := svc.PutBucketVersioning(input)
-  if err != nil {
-    if aerr, ok := err.(awserr.Error); ok {
-      switch aerr.Code() {
-      default:
-        fmt.Println(aerr.Error())
-      }
-    } else {
-      // Print the error, cast err to awserr.Error to get the Code and
-      // Message from an error.
-      fmt.Println(err.Error())
-    }
-    return
-  }
-}
-
 // DisableVersioning turns on versioning on the S3 bucket
 // In the AWS console the bucket will be mark as 'disabled',
 // in the AWS documentation the status is referred to as 'suspended'
