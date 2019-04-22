@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// The allowed values for the `access` parameter can be found here: https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+// MakeBucket The allowed values for the `access` parameter can be found here: https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 func MakeBucket(bucketName string, access string, region string, awsSession *session.Session) {
 	s3Client := s3.New(awsSession)
 	_, err := s3Client.CreateBucket(&s3.CreateBucketInput{
@@ -30,6 +30,7 @@ func MakeBucket(bucketName string, access string, region string, awsSession *ses
 
 func DeleteBucket(bucketNameOrArn string, awsSession *session.Session) {
 	bucketName := getBucketName(bucketNameOrArn)
+	DeleteAllObjectVersions(bucketName, awsSession)
 	s3Client := s3.New(awsSession)
 	_, err := s3Client.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: aws.String(bucketName),
@@ -124,7 +125,7 @@ func EncryptBucket(bucket, key string) {
 	logger.Info("Bucket " + bucket + " now has KMS encryption by default")
 }
 
-// EnableVersioning turnson version on the S3 bucket
+// EnableVersioning turns on version on the S3 bucket
 func EnableVersioning(bucket string) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -152,5 +153,104 @@ func EnableVersioning(bucket string) {
 			fmt.Println(err.Error())
 		}
 		return
+	}
+}
+
+// DisableVersioning turns on versioning on the S3 bucket
+// In the AWS console the bucket will be mark as 'disabled',
+// in the AWS documentation the status is referred to as 'suspended'
+func DisableVersioning(bucket string) {
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	svc := s3.New(sess)
+	input := &s3.PutBucketVersioningInput{
+		Bucket: aws.String(bucket),
+		VersioningConfiguration: &s3.VersioningConfiguration{
+			MFADelete: aws.String("Disabled"),
+			Status:    aws.String("Suspended"),
+		},
+	}
+
+	_, err := svc.PutBucketVersioning(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+}
+
+// DeleteAllObjectVersions gets an array of all the bucket object versions, iterates over them, and deletes them.
+func DeleteAllObjectVersions(bucket string, awsSession *session.Session) {
+	objectVersions := GetObjectVersions(bucket, awsSession)
+	length := len(objectVersions.Versions)
+
+	for i := 0; i < length; i++ {
+		id := *objectVersions.Versions[i].VersionId
+		key := *objectVersions.Versions[i].Key
+		DeleteObjectVersion(id, bucket, key, awsSession)
+	}
+}
+
+// DeleteObjectVersion deletes the specific version of an S3 bucket object.
+func DeleteObjectVersion(id, bucket, key string, awsSession *session.Session) {
+	svc := s3.New(awsSession)
+
+	input := &s3.DeleteObjectInput{
+		Bucket:    aws.String(bucket),
+		Key:       aws.String(key), // S3 key (not encryption key)
+		VersionId: aws.String(id),
+	}
+
+	_, err := svc.DeleteObject(input)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+// GetObjectVersions retuns the list of version for an S3 bucket.
+func GetObjectVersions(bucket string, awsSession *session.Session) (result *s3.ListObjectVersionsOutput) {
+	svc := s3.New(awsSession)
+	input := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucket),
+	}
+
+	result, err := svc.ListObjectVersions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	return result
+}
+
+// DeleteAllDeleteMarkers retrives the delete markers and deletes them.
+func DeleteAllDeleteMarkers(bucket string, awsSession *session.Session) {
+	deleteMarkers := GetObjectVersions(bucket, awsSession)
+	length := len(deleteMarkers.DeleteMarkers)
+
+	for i := 0; i < length; i++ {
+		id := *deleteMarkers.DeleteMarkers[i].VersionId
+		key := *deleteMarkers.DeleteMarkers[i].Key
+		DeleteObjectVersion(id, bucket, key, awsSession)
 	}
 }

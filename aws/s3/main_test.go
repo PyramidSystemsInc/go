@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	pacaws "github.com/PyramidSystemsInc/go/aws"
 	packms "github.com/PyramidSystemsInc/go/aws/kms"
@@ -103,6 +104,60 @@ func TestEnableVersioning(t *testing.T) {
 	if string(status) == "null" {
 		t.Error("unable to enable versioning")
 	}
+
+	//delete bucket
+	dinput := &s3.DeleteBucketInput{Bucket: aws.String(name)}
+	svc.DeleteBucket(dinput)
+}
+
+// TestEnableVersioning tests when turning on versinong on an S3 bucket is successful.
+func TestDisableVersioning(t *testing.T) {
+	//create bucket
+	session := pacaws.CreateAwsSession("us-east-2")
+
+	svc := s3.New(session)
+	name := "testbucketversioningagogo"
+
+	input := &s3.CreateBucketInput{
+		ACL:    aws.String("private"),
+		Bucket: aws.String(name),
+	}
+
+	_, err := svc.CreateBucket(input)
+
+	if err != nil {
+		log.Fatal("can't create bucket", err)
+	}
+
+	//enable versioning
+	EnableVersioning(name)
+
+	//give it 5 seconds to kick in
+	time.Sleep(5 * time.Second)
+
+	//test suspending versioning
+	vinput := &s3.GetBucketVersioningInput{
+		Bucket: aws.String(name),
+	}
+
+	result, err := svc.GetBucketVersioning(vinput)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	status, _ := json.Marshal(result.Status)
+
+	fmt.Println(string(status))
 
 	//delete bucket
 	dinput := &s3.DeleteBucketInput{Bucket: aws.String(name)}
