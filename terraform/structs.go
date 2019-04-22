@@ -1,6 +1,6 @@
 package terraform
 
-// Values used to create a Terraform AWS Provider
+// Provider - Values used to create a Terraform AWS Provider
 type Provider struct {
   ProjectName     string
   Region          string

@@ -7,6 +7,7 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
+// GetUrl - Returns the URL of your ECR repository
 func GetUrl() (string, error) {
   output, err := commands.Run("aws ecr get-login", "")
   errors.LogIfError(err)
@@ -19,6 +20,7 @@ func GetUrl() (string, error) {
   }
 }
 
+// Login - 
 func Login(region string) {
   output, err := commands.Run(str.Concat("aws ecr get-login --no-include-email --region " + region), "")
   errors.LogIfError(err)

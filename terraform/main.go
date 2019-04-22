@@ -10,17 +10,31 @@ import (
   "github.com/PyramidSystemsInc/go/str"
 )
 
-// Attempts to get the Terraform version to demonstrate Terraform is installed and accessible
-// If Terraform is not installed or accessible the execution of the program is stopped
-func VerifyInstallation() {
-  _, err := commands.Run("terraform version", "")
+// Apply - Creates resources detailed in the tfplan file (created using the `terraform plan` command
+func Apply(directoryToRunFrom string) string {
+  defer timeTrack(time.Now(), "Terraform apply")
+  output, err := commands.Run("terraform apply -input=false tfplan", directoryToRunFrom)
   if err != nil {
-    errors.LogAndQuit(str.Concat("ERROR: Checking the Terraform version failed with the following error: ", err.Error()))
+    errors.LogAndQuit(str.Concat("ERROR: Applying the Terraform plan failed with the following error: ", err.Error()))
+  }
+  return output
+}
+
+// Destroy - Destroys all resources managed by Terraform
+func Destroy(directoryToRunFrom string) string {
+  defer timeTrack(time.Now(), "Terraform destroy")
+  if files.Exists(str.Concat(directoryToRunFrom, "/.terraform")) {
+    output, err := commands.Run("terraform destroy -auto-approve", directoryToRunFrom)
+    if err != nil {
+      errors.LogAndQuit(str.Concat("ERROR: Terraform destroy failed with the following error: ", err.Error()))
+    }
+    return output
+  } else {
+    return str.Concat("No Terraform resources to destroy in ", directoryToRunFrom)
   }
 }
 
-
-// Initializes the terraform directory, checks for *.tf files, and processes them
+// Initialize - Initializes the terraform directory, checks for *.tf files, and processes them
 func Initialize(directoryToRunFrom string) string {
   output, err := commands.Run("terraform init -input=false", directoryToRunFrom)
   if err != nil {
@@ -29,7 +43,7 @@ func Initialize(directoryToRunFrom string) string {
   return output
 }
 
-// Creates a tfplan file with a detailed specification of what Terraform would create given the set of *.tf files
+// Plan - Creates a tfplan file with a detailed specification of what Terraform would create given the set of *.tf files
 func Plan(directoryToRunFrom string, cfg map[string]string) string {
   var variables string
   for key, value := range cfg {
@@ -43,27 +57,11 @@ func Plan(directoryToRunFrom string, cfg map[string]string) string {
   return output
 }
 
-// Creates resources detailed in the tfplan file (created using the `terraform plan` command
-func Apply(directoryToRunFrom string) string {
-  defer timeTrack(time.Now(), "Terraform apply")
-  output, err := commands.Run("terraform apply -input=false tfplan", directoryToRunFrom)
+// VerifyInstallation - Attempts to get the Terraform version to demonstrate Terraform is installed and accessible. If Terraform is not installed or accessible the execution of the program is stopped
+func VerifyInstallation() {
+  _, err := commands.Run("terraform version", "")
   if err != nil {
-    errors.LogAndQuit(str.Concat("ERROR: Applying the Terraform plan failed with the following error: ", err.Error()))
-  }
-  return output
-}
-
-// Destroys all resources managed by Terraform
-func Destroy(directoryToRunFrom string) string {
-  defer timeTrack(time.Now(), "Terraform destroy")
-  if files.Exists(str.Concat(directoryToRunFrom, "/.terraform")) {
-    output, err := commands.Run("terraform destroy -auto-approve", directoryToRunFrom)
-    if err != nil {
-      errors.LogAndQuit(str.Concat("ERROR: Terraform destroy failed with the following error: ", err.Error()))
-    }
-    return output
-  } else {
-    return str.Concat("No Terraform resources to destroy in ", directoryToRunFrom)
+    errors.LogAndQuit(str.Concat("ERROR: Checking the Terraform version failed with the following error: ", err.Error()))
   }
 }
 

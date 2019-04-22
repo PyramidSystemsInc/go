@@ -14,18 +14,21 @@ type LogLevel struct {
 
 var logLevel LogLevel
 
+// Err - Logs and error from a string
 func Err(message string) {
   if (logLevel.Err) {
     fmt.Fprintln(os.Stderr, "[ " + timestamp() + "   ERROR ]: " + message)
   }
 }
 
+// Info - Logs output as information
 func Info(message string) {
   if (logLevel.Info) {
     fmt.Println("[ " + timestamp() + "    INFO ]: " + message)
   }
 }
 
+// SetLogLevel - Sets the maximum level of logging desired. All types more frequent than the type specified will not be output
 func SetLogLevel(level string) {
   if (level == "info" || level == "warn" || level == "err") {
     logLevel = LogLevel{
@@ -38,6 +41,7 @@ func SetLogLevel(level string) {
   }
 }
 
+// Warn - Logs output as a warning
 func Warn(message string) {
   if (logLevel.Warn) {
     fmt.Println("[ " + timestamp() + " WARNING ]: " + message)
