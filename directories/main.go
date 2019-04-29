@@ -8,6 +8,11 @@ import (
   "github.com/PyramidSystemsInc/go/errors"
 )
 
+// Change - Changes the working directory to the directory specified (like `cd`)
+func Change(directory string) error {
+  return os.Chdir(directory)
+}
+
 // Create - Creates a directory (if it does not already exist)
 func Create(directory string) {
   directory = path.Clean(directory)
