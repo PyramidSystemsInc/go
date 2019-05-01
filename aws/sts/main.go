@@ -3,6 +3,7 @@ package sts
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +31,8 @@ func GetAccountID() string {
 	}
 
 	r, _ := json.Marshal(result.Account)
+	r1 := string(r)
+	r2 := strings.Replace(r1, "\"", "", -1)
 
-	return string(r)
+	return r2
 }
