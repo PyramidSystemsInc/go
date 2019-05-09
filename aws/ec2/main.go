@@ -1,6 +1,8 @@
 package ec2
 
 import (
+	"strconv"
+
   "github.com/aws/aws-sdk-go/aws"
   "github.com/aws/aws-sdk-go/aws/session"
   "github.com/aws/aws-sdk-go/service/ec2"
@@ -21,6 +23,43 @@ func GetAllVpcCidrBlocks(awsSession *session.Session) []string {
     cidrBlocks = append(cidrBlocks, *vpc.CidrBlock)
   }
   return cidrBlocks
+}
+
+func FindAvailableVpcCidrBlocks(numberToFind int, awsSession *session.Session) []string {
+	usedVpcCidrBlocks := GetAllVpcCidrBlocks(awsSession)
+	var freeVpcCidrBlocks []string
+	var secondPartDigits []string
+	for i := 0; i < numberToFind; i++ {
+		cidrBlockError := "The following error occurred while attempting to find a free CIDR block for a VPC: "
+		if i == 0 {
+			secondPartDigits = append(secondPartDigits, "1")
+		} else {
+			lastValue, err := strconv.Atoi(secondPartDigits[i - 1])
+			if err != nil {
+				errors.LogAndQuit(cidrBlockError + err.Error())
+			}
+			secondPartDigits = append(secondPartDigits, strconv.Itoa(lastValue + 1))
+		}
+		digitFound := true
+		for digitFound {
+			digitFound = false
+			out: for _, usedCidrBlock := range usedVpcCidrBlocks {
+				testCidrBlock := "10."+secondPartDigits[i]+".0.0/16"
+				if usedCidrBlock == testCidrBlock {
+					numberDigit, err := strconv.Atoi(secondPartDigits[i])
+					if err != nil {
+						errors.LogAndQuit(cidrBlockError + err.Error())
+					}
+					numberDigit++
+					secondPartDigits[i] = strconv.Itoa(numberDigit)
+					digitFound = true
+					break out
+				}
+			}
+		}
+		freeVpcCidrBlocks = append(freeVpcCidrBlocks, "10."+secondPartDigits[i]+".0.0/16")
+	}
+	return freeVpcCidrBlocks
 }
 
 // FindPublicIpOfNetworkInterface - Given a network interface ID, returns the public IP associated with it
