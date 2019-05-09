@@ -15,7 +15,7 @@ import (
 )
 
 // MakeBucket The allowed values for the `access` parameter can be found here: https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
-func MakeBucket(bucketName string, access string, region string, awsSession *session.Session) {
+func MakeBucket(bucketName string, access string, region string, awsSession *session.Session) error {
   s3Client := s3.New(awsSession)
   _, err := s3Client.CreateBucket(&s3.CreateBucketInput{
     ACL:    aws.String(access),
@@ -25,7 +25,7 @@ func MakeBucket(bucketName string, access string, region string, awsSession *ses
     },
     ObjectLockEnabledForBucket: aws.Bool(false),
   })
-  errors.QuitIfError(err)
+	return err
 }
 
 func DeleteBucket(bucketNameOrArn string, awsSession *session.Session) {
