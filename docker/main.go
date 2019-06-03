@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"strconv"
   "github.com/PyramidSystemsInc/go/commands"
   "github.com/PyramidSystemsInc/go/errors"
@@ -21,7 +22,7 @@ func DoesNetworkExist(networkName string) bool {
 
 // TODO: Fails silently (quickest way to get this done)
 // RunContainer - Performs a `docker run` command
-func RunContainer(containerName string, networkName string, hostPorts []int, containerPorts []int, imageName string, startupCommand string) {
+func RunContainer(containerName string, networkName string, hostPorts []int, containerPorts []int, volumeMount string, workingDirectory string, imageName string, startupCommand string) {
 	runCommand := "docker run"
 	runCommand += " --name " + containerName
 	if networkName != "" {
@@ -32,9 +33,24 @@ func RunContainer(containerName string, networkName string, hostPorts []int, con
 			runCommand += " -p " + strconv.Itoa(hostPorts[i]) + ":" + strconv.Itoa(containerPorts[i])
 		}
 	}
-	runCommand += " -d " + imageName
+	if volumeMount != "" {
+		runCommand += " -v " + volumeMount
+	}
+	if workingDirectory != "" {
+		runCommand += " -w " + workingDirectory
+	}
+	runCommand += " -it --rm -d " + imageName
 	if startupCommand != "" {
 		runCommand += " " + startupCommand
 	}
+	fmt.Println(runCommand)
 	commands.Run(runCommand, "")
+}
+
+// CleanContainers - Attempts a `docker stop` and `docker rm`. Fails silently if the container does not exist or is not removed
+func CleanContainers(containerNamesOrIds ...string) {
+	for _, containerNameOrId := range containerNamesOrIds {
+		commands.Run(str.Concat("docker stop ", containerNameOrId), "")
+		commands.Run(str.Concat("docker rm ", containerNameOrId), "")
+	}
 }
