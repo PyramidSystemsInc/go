@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"fmt"
 	"strconv"
   "github.com/PyramidSystemsInc/go/commands"
   "github.com/PyramidSystemsInc/go/errors"
@@ -22,7 +21,7 @@ func DoesNetworkExist(networkName string) bool {
 
 // TODO: Fails silently (quickest way to get this done)
 // RunContainer - Performs a `docker run` command
-func RunContainer(containerName string, networkName string, hostPorts []int, containerPorts []int, volumeMount string, workingDirectory string, imageName string, startupCommand string) {
+func RunContainer(containerName string, networkName string, hostPorts []int, containerPorts []int, volumeMount string, workingDirectory string, environmentVariables []string, imageName string, startupCommand string) {
 	runCommand := "docker run"
 	runCommand += " --name " + containerName
 	if networkName != "" {
@@ -32,6 +31,9 @@ func RunContainer(containerName string, networkName string, hostPorts []int, con
 		for i := 0; i < len(hostPorts); i++ {
 			runCommand += " -p " + strconv.Itoa(hostPorts[i]) + ":" + strconv.Itoa(containerPorts[i])
 		}
+	}
+	for _, environmentVariable := range environmentVariables {
+		runCommand += " -e " + environmentVariable
 	}
 	if volumeMount != "" {
 		runCommand += " -v " + volumeMount
@@ -43,7 +45,6 @@ func RunContainer(containerName string, networkName string, hostPorts []int, con
 	if startupCommand != "" {
 		runCommand += " " + startupCommand
 	}
-	fmt.Println(runCommand)
 	commands.Run(runCommand, "")
 }
 
