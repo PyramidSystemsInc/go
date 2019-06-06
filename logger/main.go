@@ -7,48 +7,54 @@ import (
 	"time"
 )
 
-type LogLevel struct {
-	Info bool
-	Warn bool
-	Err  bool
-}
+type LogLevel int
 
-var logLevel LogLevel
+const (
+	ERR  LogLevel = 0
+	WARN LogLevel = 1
+	INFO LogLevel = 2
+)
+
+var logLevel = ERR
+
+func log(typ LogLevel, message ...string) {
+	// msg := "[ " + timestamp() + "]  %s: %s"
+	if typ == ERR {
+		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), typ, strings.Join(message, " "))
+	} else {
+		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), typ, strings.Join(message, " "))
+	}
+}
 
 // Err - Logs and error from a string
 func Err(message ...string) {
-	if logLevel.Err {
-		fmt.Fprintln(os.Stderr, "[ "+timestamp()+"   ERROR ]: "+strings.Join(message, " "))
-	}
+	log(ERR, message...)
 }
 
 // Info - Logs output as information
 func Info(message ...string) {
-	if logLevel.Info {
-		fmt.Println("[ " + timestamp() + "    INFO ]: " + strings.Join(message, " "))
+	if logLevel >= INFO {
+		log(INFO, message...)
 	}
 }
 
 // SetLogLevel - Sets the maximum level of logging desired. All types more frequent than the type specified will not be output
-func SetLogLevel(level string) {
-	if level == "info" || level == "warn" || level == "err" {
-		logLevel = LogLevel{
-			Info: level == "info",
-			Warn: level == "info" || level == "warn",
-			Err:  true,
-		}
-	} else {
-		fmt.Println("The valid log types are: 'info', 'warn', and 'err'")
-	}
+func SetLogLevel(level LogLevel) {
+	logLevel = level
 }
 
 // Warn - Logs output as a warning
 func Warn(message ...string) {
-	if logLevel.Warn {
-		fmt.Println("[ " + timestamp() + " WARNING ]: " + strings.Join(message, " "))
+	if logLevel >= WARN {
+		log(WARN, message...)
 	}
 }
 
 func timestamp() string {
 	return time.Now().UTC().Format(time.RFC3339)
+}
+
+func (lvl LogLevel) String() string {
+	names := [...]string{"ERROR!", "WARNING", "INFO"}
+	return names[lvl]
 }
