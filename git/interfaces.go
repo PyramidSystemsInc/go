@@ -8,7 +8,8 @@ type Git interface {
 	authHeader() string
 	endpoint() string
 
-	CreateRepository(info GitInfo, repo GitRepo) GitRepo
+	GetRepository(repo GitRepo) (GitRepo, error)
+	CreateRepository(info GitInfo, repo GitRepo) (GitRepo, error)
 }
 
 type GitInfo struct {
