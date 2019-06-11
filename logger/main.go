@@ -18,7 +18,6 @@ const (
 var logLevel = ERR
 
 func log(typ LogLevel, message ...string) {
-	// msg := "[ " + timestamp() + "]  %s: %s"
 	if typ == ERR {
 		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), typ, strings.Join(message, " "))
 	} else {
