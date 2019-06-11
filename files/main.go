@@ -22,10 +22,9 @@ func Delete(filePath string) error {
 }
 
 // CreateBlank - Creates a file given a full path (including file name and extension) that has no contents
-func CreateBlank(filePath string) *os.File {
+func CreateBlank(filePath string) (*os.File, error) {
 	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0755)
-	errors.LogIfError(err)
-	return file
+	return file, err
 }
 
 // FindUpTree - Looks recursively in parent directories until a certain file name is found and returns the path to that file
@@ -55,13 +54,16 @@ func Exists(filePath string) bool {
 }
 
 // EnsurePath - Creates a path if it does not already exist and returns full path
-func EnsurePath(filePath string) string {
-	os.MkdirAll(filePath, 0755)
+func EnsurePath(filePath string) (string, error) {
+	err := os.MkdirAll(filePath, 0755)
+	if err != nil {
+		return "", err
+	}
 	if filepath.IsAbs(filePath) {
-		return filePath
+		return filePath, nil
 	} else {
 		wd, _ := os.Getwd()
-		return filepath.Join(wd, filePath)
+		return filepath.Join(wd, filePath), nil
 	}
 }
 
@@ -101,8 +103,8 @@ func Download(url string, fullPath string) error {
 }
 
 // Write - Writes (or overwrites) a file given a full path and contents
-func Write(fullPath string, data []byte) {
-	ioutil.WriteFile(fullPath, data, 0644)
+func Write(fullPath string, data []byte) error {
+	return ioutil.WriteFile(fullPath, data, 0644)
 }
 
 // Prepend - Adds content to the top of a file
