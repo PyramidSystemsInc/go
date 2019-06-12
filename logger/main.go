@@ -15,6 +15,11 @@ const (
 	INFO LogLevel = 2
 )
 
+var names = [...]string{
+	"ERROR",
+	"WARNING",
+	"INFO"}
+
 var logLevel = ERR
 
 // Err - Logs and error from a string
@@ -48,8 +53,8 @@ func timestamp() string {
 
 func log(typ LogLevel, message ...string) {
 	if typ == ERR {
-		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), typ, strings.Join(message, " "))
+		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), names[typ], strings.Join(message, " "))
 	} else {
-		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), typ, strings.Join(message, " "))
+		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), names[typ], strings.Join(message, " "))
 	}
 }
