@@ -26,7 +26,6 @@ func MakeBucket(bucketName string, access string, region string, awsSession *ses
 
 	if region == "us-east-1" {
 		loc := s3.NormalizeBucketLocation("")
-		fmt.Println("inner: " + loc)
 		_, err := s3Client.CreateBucket(&s3.CreateBucketInput{
 			ACL:                        aws.String(access),
 			Bucket:                     aws.String(bucketName),
