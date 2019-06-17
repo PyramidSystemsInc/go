@@ -30,6 +30,17 @@ func CreateBlank(filePath string) *os.File {
 	return file
 }
 
+// CreateFromBinary creates a file populates it with the contents provided
+func CreateFromBinary(filePath string, fileContents []byte) {
+	file, err := os.Create(filePath)
+	errors.QuitIfError(err)
+
+	_, err = file.Write(fileContents)
+	errors.QuitIfError(err)
+
+	file.Close()
+}
+
 // FindUpTree - Looks recursively in parent directories until a certain file name is found and returns the path to that file
 func FindUpTree(fileName string) string {
 	workingDirectory := directories.GetWorking()
