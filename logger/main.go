@@ -15,10 +15,11 @@ const (
 	INFO LogLevel = 2
 )
 
-var names = [...]string{
-	"ERROR",
-	"WARNING",
-	"INFO"}
+var Levels = map[LogLevel]string{
+    ERR:  "ERROR",
+    WARN: "WARNING",
+    INFO: "INFO",
+}
 
 var logLevel = ERR
 
@@ -53,8 +54,18 @@ func timestamp() string {
 
 func log(typ LogLevel, message ...string) {
 	if typ == ERR {
-		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), names[typ], strings.Join(message, " "))
+		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
 	} else {
-		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), names[typ], strings.Join(message, " "))
+		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
 	}
+}
+
+func ParseLevel(userInput string) (LogLevel, bool) {
+	var defaultLog LogLevel
+	for k, v := range Levels {
+		if userInput == v {
+			return k, true
+		}
+	}
+	return defaultLog, false
 }
