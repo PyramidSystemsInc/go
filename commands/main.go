@@ -4,6 +4,7 @@ import (
   "io/ioutil"
   "os/exec"
   "strings"
+  "regexp"
   "github.com/PyramidSystemsInc/go/directories"
   "github.com/PyramidSystemsInc/go/errors"
   "github.com/PyramidSystemsInc/go/logger"
@@ -14,6 +15,7 @@ import (
 func Run(fullCommand string, directory string) (string, error) {
   command, arguments := separateCommand(fullCommand)
   cmd := exec.Command(command, arguments...)
+
   stdout, err := cmd.StdoutPipe()
   errors.LogIfError(err)
   stderr, err := cmd.StderrPipe()
@@ -70,11 +72,29 @@ func RunWithStdin(fullCommand string, data string, directory string) string {
   return out
 }
 
-func separateCommand(fullCommand string) (string, []string) {
-  split := strings.Split(fullCommand, " ")
-  return split[0], split[1:len(split)]
-}
 
 func replaceRelativeWithFullPath(directory string) string {
   return strings.Replace(directory, ".", directories.GetWorking(), 1)
 }
+
+/*
+ * Separates a Command (executable) from its arguments. Delimitters taken into account are spaces
+ * but spaces within double quotes are conserved. Double quotes are eventually removed as well since
+ * GOlang escapes them prior to sending to the command line.
+ * @return string - command
+ * @return []string - array of arguments
+ */
+func separateCommand(text string) (string, []string) {
+  //Matches words seperated by a space except if enclosed in double quotes
+  exp := regexp.MustCompile(`[^\s"']+|"[^"]*"|'[^']`)
+  expResults := exp.FindAllString(text, -1)
+
+  sanitizedVals := []string{}
+
+  for counter := range expResults {
+    currSanitizedValue := strings.Replace(expResults[counter],`"`, "", -1)
+    sanitizedVals = append(sanitizedVals, currSanitizedValue)
+  }
+  return sanitizedVals[0], sanitizedVals[1:len(sanitizedVals)]
+}
+
