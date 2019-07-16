@@ -54,9 +54,9 @@ func timestamp() string {
 
 func log(typ LogLevel, message ...string) {
 	if typ == ERR {
-		fmt.Fprintf(os.Stderr, "[ %s]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
+		fmt.Fprintf(os.Stderr, "[ %s ]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
 	} else {
-		fmt.Fprintf(os.Stdout, "[ %s]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
+		fmt.Fprintf(os.Stdout, "[ %s ]  %s: %s\n", timestamp(), Levels[typ], strings.Join(message, " "))
 	}
 }
 
