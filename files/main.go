@@ -2,11 +2,14 @@ package files
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -244,4 +247,46 @@ func CreateFileWithContent(filePath string, content []byte) {
 	_, err = file.Write(content)
 	errors.QuitIfError(err)
 	file.Close()
+}
+
+// FileStringReplace opens a given file and peforms a search and replace of its contents and saves the file.
+func FileStringReplace(file, find, replace string) {
+	//copy file contents into variable
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//check the regex is valid
+	re := regexp.MustCompile(find)
+
+	//grep variable for string
+	//replace all occurences of string in variable
+	s := re.ReplaceAllString(string(data), replace)
+
+	//overwrite file with new contents
+	w := ioutil.WriteFile(file, []byte(s), 0666)
+	if w != nil {
+		log.Fatalf("unable to write to file: %s\n", w)
+	}
+}
+
+// DirectoryFileStringReplace reads the target directory for files matching the filex regex pattern.
+// It then performs a search and replace in the matching files.
+func DirectoryFileStringReplace(dir, filex, search, replace string) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		fmt.Println("unable to read file")
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		path := dir + "\\" + file.Name()
+		//check the regex is valid
+		re := regexp.MustCompile(filex)
+
+		if re.MatchString(file.Name()) {
+			FileStringReplace(path, search, replace)
+		}
+	}
 }
