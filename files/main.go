@@ -281,7 +281,7 @@ func DirectoryFileStringReplace(dir, filex, search, replace string) {
 	}
 
 	for _, file := range files {
-		path := dir + "\\" + file.Name()
+		path := filepath.Join(dir, file.Name())
 		//check the regex is valid
 		re := regexp.MustCompile(filex)
 
